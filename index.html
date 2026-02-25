@@ -1,0 +1,1384 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>现地计划助手</title>
+  <style>
+    :root{
+      --bg:#0b1020; --bg2:#070a14;
+      --card: rgba(18,26,51,.92);
+      --text:#e8ecff; --muted:#a9b2d6;
+      --line: rgba(255,255,255,.10);
+      --ok:#6ef2b6; --warn:#ffd27a; --bad:#ff8a8a; --info:#86b7ff;
+      --btn1:#2b3a75; --btn2:#1e2a57;
+      --shadow: 0 10px 40px rgba(0,0,0,.35);
+      --r:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans CJK SC", "PingFang SC", "Hiragino Sans", "Microsoft YaHei", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(82,109,255,.25), transparent 60%),
+        radial-gradient(900px 700px at 90% 20%, rgba(110,242,182,.18), transparent 60%),
+        radial-gradient(900px 700px at 30% 90%, rgba(255,210,122,.14), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      min-height:100vh;
+    }
+    a{color:inherit}
+    .wrap{max-width:1200px;margin:0 auto;padding:18px 14px 40px}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      margin-bottom:14px;
+    }
+    .brand{display:flex;align-items:center;gap:12px}
+    .avatar{
+      width:42px;height:42px;border-radius:999px;
+      background:linear-gradient(135deg, rgba(134,183,255,.35), rgba(110,242,182,.25));
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 6px 20px rgba(0,0,0,.22);
+      overflow:hidden; flex:0 0 auto;
+      display:grid; place-items:center;
+      font-weight:800;
+    }
+    .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .brand .title{display:flex;flex-direction:column;line-height:1.1}
+    .brand .title b{font-size:15px;letter-spacing:.2px}
+    .brand .title span{font-size:12px;color:var(--muted)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .btn{
+      border:1px solid rgba(255,255,255,.14);
+      background:linear-gradient(180deg, rgba(43,58,117,.92), rgba(30,42,87,.92));
+      color:var(--text);
+      padding:9px 11px;
+      border-radius:12px;
+      cursor:pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,.22);
+      font-size:12px;
+      user-select:none;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.ghost{background:rgba(255,255,255,.06)}
+    .btn.danger{background:linear-gradient(180deg, rgba(255,138,138,.18), rgba(255,138,138,.08))}
+    .btn.ok{background:linear-gradient(180deg, rgba(110,242,182,.18), rgba(110,242,182,.08))}
+    .btn.small{padding:6px 9px;border-radius:10px;font-size:12px}
+    /* 页面整体改为上下结构：上方录入/统计 -> 中间图表 -> 下方主表 */
+    .grid{
+      display:grid; gap:12px;
+      grid-template-columns: 1fr;
+      align-items:start;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:12px 12px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:flex-end;justify-content:space-between;gap:10px;
+    }
+    .card .hd b{font-size:13px;letter-spacing:.2px}
+    .card .hd span{font-size:12px;color:var(--muted)}
+    .card .bd{padding:12px}
+    .form{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:8px;
+    }
+    .field{grid-column: span 3; display:flex; flex-direction:column; gap:5px}
+    .field.w2{grid-column: span 2}
+    .field.w3{grid-column: span 3}
+    .field.w4{grid-column: span 4}
+    .field.w6{grid-column: span 6}
+    .field.w12{grid-column: span 12}
+    .label{font-size:11px;color:var(--muted)}
+    input, select, textarea{
+      width:100%;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 9px 10px;
+      outline:none;
+      font-size:12px;
+    }
+    textarea{min-height:38px; resize:vertical}
+    input[type="number"]{font-family:var(--mono)}
+    .row-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+    .subline{
+      display:flex; gap:10px; flex-wrap:wrap;
+      color:var(--muted); font-size:12px
+    }
+    .pill{
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      font-size:11px;
+      color:var(--muted);
+    }
+    .pill.ok{color:var(--ok); border-color: rgba(110,242,182,.35); background:rgba(110,242,182,.10)}
+    .pill.warn{color:var(--warn); border-color: rgba(255,210,122,.35); background:rgba(255,210,122,.10)}
+    .pill.bad{color:var(--bad); border-color: rgba(255,138,138,.35); background:rgba(255,138,138,.10)}
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:8px;
+    }
+    @media (max-width: 900px){ .kpis{grid-template-columns:repeat(2,1fr)} }
+    .kpi{
+      padding:10px 10px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background:rgba(255,255,255,.05);
+    }
+    .kpi .t{font-size:11px;color:var(--muted)}
+    .kpi .v{font-size:15px;font-weight:800;margin-top:4px;font-family:var(--mono)}
+    .toolbar{
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+      margin-bottom:10px;
+    }
+    .toolbar .field{min-width:160px; grid-column:auto}
+    .list{
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .item{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background:rgba(255,255,255,.04);
+      padding:10px 10px;
+      display:grid;
+      grid-template-columns: 1.2fr 2.4fr 1.4fr 1.2fr auto;
+      gap:10px;
+      align-items:center;
+    }
+    @media (max-width: 980px){
+      .item{grid-template-columns: 1fr; gap:8px}
+      .item .iacts{justify-content:flex-start}
+    }
+    .mono{font-family:var(--mono)}
+    .muted{color:var(--muted)}
+    .i1 b{font-size:13px}
+    .i2{display:flex;flex-direction:column;gap:3px}
+    .i2 .big{font-size:13px;font-weight:700;line-height:1.2}
+    .i2 .small{font-size:12px;color:var(--muted);line-height:1.2}
+    .iacts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    .tagPanel{
+      margin-top:8px;
+      border-top:1px dashed rgba(255,255,255,.14);
+      padding-top:8px;
+      display:none;
+    }
+    .tagPanel.show{display:block}
+    .charts{
+      display:grid;gap:10px;
+      grid-template-columns: repeat(2, 1fr);
+      align-items:start;
+    }
+    @media (max-width: 980px){ .charts{grid-template-columns:1fr} }
+    .chartCard{
+      padding:10px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background:rgba(255,255,255,.04);
+      min-height:260px;
+      height:300px;
+      overflow:hidden;
+      display:flex;flex-direction:column;gap:8px;
+    }
+    .chartCard b{font-size:12px}
+    /*
+      Chart.js 的 responsive + maintainAspectRatio:false 需要一个“固定高度”的父容器。
+      否则在部分浏览器会出现高度反复增大的反馈循环（表现为统计区无限延伸）。
+    */
+    .canvasWrap{position:relative;width:100%;height:230px;flex:1 1 auto;min-height:0}
+    .canvasWrap canvas{width:100% !important;height:100% !important;display:block}
+    .note{font-size:12px;color:var(--muted);line-height:1.4}
+    .footerTip{margin-top:12px;color:var(--muted);font-size:12px}
+    .rightHint{font-size:12px;color:var(--muted)}
+  
+    /* Controls */
+    select, option{
+      background:#000;
+      color:var(--text);
+    }
+    select{
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .pillBtn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:999px;
+      cursor:pointer;
+      white-space:nowrap;
+      user-select:none;
+    }
+    .pillBtn.ok{border-color: rgba(110,242,182,.45); background:rgba(110,242,182,.10)}
+    .pillBtn.warn{border-color: rgba(255,210,122,.45); background:rgba(255,210,122,.10)}
+    .pillBtn.bad{border-color: rgba(255,138,138,.45); background:rgba(255,138,138,.10)}
+    .chips{display:flex; flex-wrap:wrap; gap:8px}
+    .chip{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.04);
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .chip button{all:unset; cursor:pointer; color:var(--muted)}
+    /* Compact list */
+    .item{
+      padding:8px 10px;
+      border-radius:12px;
+      gap:8px;
+      grid-template-columns: 1.1fr 2.6fr 1.6fr 1.4fr auto;
+    }
+    .big{font-size:14px}
+    .small{font-size:12px}
+    .iacts .btn.small{padding:6px 10px}
+
+  
+    /* one-click cycle select */
+    select.cycleSelect{
+      -webkit-appearance:none; appearance:none;
+      background:#000;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      line-height:1;
+      cursor:pointer;
+      text-align:center;
+      min-width:96px;
+    }
+    select.cycleSelect:focus{ outline:none; border-color: rgba(255,255,255,.28); }
+    select.cycleSelect option{ background:#000; color:#fff; }
+
+/* Beautified cycle-select (looks like pill button) */
+select.cycleSelect{
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+  background:#000;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:999px;
+  padding:6px 34px 6px 12px;
+  font-size:12px;
+  line-height:1;
+  cursor:pointer;
+  min-width:110px;
+}
+select.cycleSelect:focus{
+  outline:none;
+  border-color:rgba(255,255,255,.42);
+  box-shadow:0 0 0 3px rgba(255,255,255,.08);
+}
+.selectWrap{ position:relative; display:inline-block; }
+.selectWrap::after{
+  content:"▾";
+  position:absolute;
+  right:12px; top:50%;
+  transform:translateY(-50%);
+  pointer-events:none;
+  color:rgba(255,255,255,.7);
+  font-size:12px;
+}
+
+/* Triple date picker */
+.dateTriple{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.dateTriple .cycleSelect{ min-width:92px; }
+.dateTriple .sep{ opacity:.6; font-size:12px; }
+
+/* Seiyuu chips */
+.chip{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+  font-size:12px;
+}
+.chip .x{ opacity:.8; cursor:pointer; padding:0 6px; border-radius:999px; border:1px solid rgba(255,255,255,.12); }
+.chip .x:hover{ opacity:1; border-color: rgba(255,255,255,.26); }
+</style>
+  <!-- Chart.js (用于圆形统计图). 如需离线使用，我也可以把库内嵌进单文件。 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="avatar" id="avatarBox" title="Author">
+          <img id="avatarImg" src="./avatar.jpg" alt="avatar" onerror="this.remove(); document.getElementById('avatarBox').textContent='CN';" />
+        </div>
+        <div class="title">
+          <b id="authorName">Copper Nickel</b>
+          <span>现地计划助手 · 本地保存（localStorage）</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="btnImportJson">导入 JSON</button>
+        <button class="btn" id="btnExportJson">导出 JSON</button>
+        <button class="btn ghost" id="btnClear">清空本地数据</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- 上方：添加行程 + 汇总 -->
+      <div class="card">
+        <div class="hd">
+          <div>
+            <b>添加新行程</b>
+            <div class="subline">
+              <span class="pill">日期格式：YYYY.M.D</span>
+              <span class="pill">金额：CNY</span>
+              <span class="pill">女声优 TAG 可隐藏</span>
+            </div>
+          </div>
+          <span class="rightHint" id="saveHint">已保存</span>
+        </div>
+        <div class="bd">
+          <div class="form" id="addForm">
+            <div class="field w4">
+              <div class="label">日期（可多选）</div>
+              <div class="row" style="gap:8px; flex-wrap:wrap">
+                
+<div class="dateTriple" id="dateTripleWrap">
+  <span class="selectWrap"><select id="f_year" class="cycleSelect">
+<option value="2000">2000</option>
+<option value="2001">2001</option>
+<option value="2002">2002</option>
+<option value="2003">2003</option>
+<option value="2004">2004</option>
+<option value="2005">2005</option>
+<option value="2006">2006</option>
+<option value="2007">2007</option>
+<option value="2008">2008</option>
+<option value="2009">2009</option>
+<option value="2010">2010</option>
+<option value="2011">2011</option>
+<option value="2012">2012</option>
+<option value="2013">2013</option>
+<option value="2014">2014</option>
+<option value="2015">2015</option>
+<option value="2016">2016</option>
+<option value="2017">2017</option>
+<option value="2018">2018</option>
+<option value="2019">2019</option>
+<option value="2020">2020</option>
+<option value="2021">2021</option>
+<option value="2022">2022</option>
+<option value="2023">2023</option>
+<option value="2024">2024</option>
+<option value="2025">2025</option>
+<option value="2026">2026</option>
+<option value="2027">2027</option>
+<option value="2028">2028</option>
+<option value="2029">2029</option>
+<option value="2030">2030</option>
+<option value="2031">2031</option>
+<option value="2032">2032</option>
+<option value="2033">2033</option>
+<option value="2034">2034</option>
+<option value="2035">2035</option>
+<option value="2036">2036</option>
+<option value="2037">2037</option>
+<option value="2038">2038</option>
+<option value="2039">2039</option>
+<option value="2040">2040</option>
+<option value="2041">2041</option>
+<option value="2042">2042</option>
+<option value="2043">2043</option>
+<option value="2044">2044</option>
+<option value="2045">2045</option>
+<option value="2046">2046</option>
+<option value="2047">2047</option>
+<option value="2048">2048</option>
+<option value="2049">2049</option>
+<option value="2050">2050</option>
+</select></span>
+  <span class="sep">-</span>
+  <span class="selectWrap"><select id="f_month" class="cycleSelect">
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+<option value="6">6</option>
+<option value="7">7</option>
+<option value="8">8</option>
+<option value="9">9</option>
+<option value="10">10</option>
+<option value="11">11</option>
+<option value="12">12</option>
+</select></span>
+  <span class="sep">-</span>
+  <span class="selectWrap"><select id="f_day" class="cycleSelect">
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+<option value="6">6</option>
+<option value="7">7</option>
+<option value="8">8</option>
+<option value="9">9</option>
+<option value="10">10</option>
+<option value="11">11</option>
+<option value="12">12</option>
+<option value="13">13</option>
+<option value="14">14</option>
+<option value="15">15</option>
+<option value="16">16</option>
+<option value="17">17</option>
+<option value="18">18</option>
+<option value="19">19</option>
+<option value="20">20</option>
+<option value="21">21</option>
+<option value="22">22</option>
+<option value="23">23</option>
+<option value="24">24</option>
+<option value="25">25</option>
+<option value="26">26</option>
+<option value="27">27</option>
+<option value="28">28</option>
+<option value="29">29</option>
+<option value="30">30</option>
+<option value="31">31</option>
+</select></span>
+</div>
+
+                <button class="btn small" type="button" id="btnAddDate">添加日期</button>
+                <button class="btn small ghost" type="button" id="btnClearDates">清空</button>
+              </div>
+              <div class="chips" id="dateChips" style="margin-top:8px"></div>
+              <div class="hint muted" style="margin-top:6px">提示：添加后会生成多条行程（每个日期一条）。</div>
+            </div>
+            
+<div class="field w2">
+  <div class="label">时间</div>
+  <div class="dateTriple">
+    <span class="selectWrap"><select id="f_hour" class="cycleSelect">
+<option value="00">00</option>
+<option value="01">01</option>
+<option value="02">02</option>
+<option value="03">03</option>
+<option value="04">04</option>
+<option value="05">05</option>
+<option value="06">06</option>
+<option value="07">07</option>
+<option value="08">08</option>
+<option value="09">09</option>
+<option value="10">10</option>
+<option value="11">11</option>
+<option value="12">12</option>
+<option value="13">13</option>
+<option value="14">14</option>
+<option value="15">15</option>
+<option value="16">16</option>
+<option value="17">17</option>
+<option value="18">18</option>
+<option value="19">19</option>
+<option value="20">20</option>
+<option value="21">21</option>
+<option value="22">22</option>
+<option value="23">23</option>
+<option value="24">24</option>
+</select></span>
+    <span class="sep">:</span>
+    <span class="selectWrap"><select id="f_min" class="cycleSelect">
+<option value="00">00</option>
+<option value="01">01</option>
+<option value="02">02</option>
+<option value="03">03</option>
+<option value="04">04</option>
+<option value="05">05</option>
+<option value="06">06</option>
+<option value="07">07</option>
+<option value="08">08</option>
+<option value="09">09</option>
+<option value="10">10</option>
+<option value="11">11</option>
+<option value="12">12</option>
+<option value="13">13</option>
+<option value="14">14</option>
+<option value="15">15</option>
+<option value="16">16</option>
+<option value="17">17</option>
+<option value="18">18</option>
+<option value="19">19</option>
+<option value="20">20</option>
+<option value="21">21</option>
+<option value="22">22</option>
+<option value="23">23</option>
+<option value="24">24</option>
+<option value="25">25</option>
+<option value="26">26</option>
+<option value="27">27</option>
+<option value="28">28</option>
+<option value="29">29</option>
+<option value="30">30</option>
+<option value="31">31</option>
+<option value="32">32</option>
+<option value="33">33</option>
+<option value="34">34</option>
+<option value="35">35</option>
+<option value="36">36</option>
+<option value="37">37</option>
+<option value="38">38</option>
+<option value="39">39</option>
+<option value="40">40</option>
+<option value="41">41</option>
+<option value="42">42</option>
+<option value="43">43</option>
+<option value="44">44</option>
+<option value="45">45</option>
+<option value="46">46</option>
+<option value="47">47</option>
+<option value="48">48</option>
+<option value="49">49</option>
+<option value="50">50</option>
+<option value="51">51</option>
+<option value="52">52</option>
+<option value="53">53</option>
+<option value="54">54</option>
+<option value="55">55</option>
+<option value="56">56</option>
+<option value="57">57</option>
+<option value="58">58</option>
+<option value="59">59</option>
+</select></span>
+  </div>
+</div>
+
+            <div class="field w2">
+              <div class="label">国家</div>
+              <input id="f_country" placeholder="日本" />
+            </div>
+            <div class="field w2">
+              <div class="label">城市 / 地区</div>
+              <input id="f_city" placeholder="东京" />
+            </div>
+            <div class="field w4">
+              <div class="label">Live 名称</div>
+              <input id="f_live" placeholder="Roselia ..." />
+            </div>
+
+            <div class="field w4">
+              <div class="label">场馆</div>
+              <input id="f_venue" placeholder="武道馆 / Zepp ..." />
+            </div>
+
+
+<div class="field w6">
+  <div class="label">女声优（可多选）</div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <input id="f_seiyuuInput" placeholder="输入名字后点添加" style="flex:1;min-width:220px" />
+    <button class="btn small" id="btnAddSeiyuu" type="button">添加</button>
+  </div>
+  <div id="seiyuuChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+</div>
+
+            <div class="field w2">
+              <div class="label">票务状态</div>
+              <div class="row" style="gap:8px">
+                <button class="pillBtn" type="button" id="f_ticketBtn" data-val="">（空）</button>
+                <input type="hidden" id="f_ticketStatus" value="" />
+              </div>
+            </div>
+            <div class="field w2">
+              <div class="label">门票价格（CNY）</div>
+              <input id="f_ticketPrice" type="number" min="0" step="1" placeholder="0" />
+            </div>
+
+            <div class="field w2">
+              <div class="label">航司</div>
+              <input id="f_airline" placeholder="ANA / JAL / MU..." />
+            </div>
+            <div class="field w2">
+              <div class="label">交通状态</div>
+              <div class="row" style="gap:8px">
+                <button class="pillBtn" type="button" id="f_transportBtn" data-val="">（空）</button>
+                <input type="hidden" id="f_transportStatus" value="" />
+              </div>
+            </div>
+            <div class="field w2">
+              <div class="label">航班号</div>
+              <input id="f_transportMode" placeholder="如 NH123 / JL201" />
+            </div>
+            <div class="field w2">
+              <div class="label">交通票价（CNY）</div>
+              <input id="f_transportPrice" type="number" min="0" step="1" placeholder="0" />
+            </div>
+
+            <div class="field w2">
+              <div class="label">座位 / 区域</div>
+              <input id="f_seat" placeholder="A席 / 2F ..." />
+            </div>
+            <div class="field w2">
+              <div class="label">票种</div>
+              <select class="cycleSelect" id="f_ticketType">
+                <option value="">（空）</option>
+                <option>S席</option>
+                <option>A席</option>
+                <option>一般席</option>
+                <option>见切席</option>
+                <option>全席指定</option>
+              </select>
+            </div>
+            <div class="field w2">
+              <div class="label">住宿</div>
+              <input id="f_lodging" placeholder="酒店名 / 备注" />
+            </div>
+            <div class="field w2">
+              <div class="label">住宿价格（CNY）</div>
+              <input id="f_lodgingPrice" type="number" min="0" step="1" placeholder="0" />
+            </div>
+            <div class="field w6">
+              <div class="label">备注（自由）</div>
+              <input id="f_notes" placeholder="入场注意 / 同行 / 取票方式..." />
+            </div>
+
+            <div class="field w12">
+              <div class="row-actions">
+                <button class="btn ok" id="btnAdd">添加到行程</button>
+                <button class="btn ghost" id="btnQuickToday">填入今天</button>
+                <button class="btn ghost" id="btnSample">填入示例</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="kpis" id="kpiBox">
+            <!-- filled by JS -->
+          </div>
+
+          <div class="footerTip">提示：所有数据仅保存在本机浏览器 localStorage。换设备/清缓存会丢失，请定期导出 JSON 备份。</div>
+        </div>
+      </div>
+
+      <!-- 右侧：圆形统计图 -->
+      <div class="card">
+        <div class="hd">
+          <div>
+            <b>数据分析（圆形统计）</b>
+            <span>基于当前筛选结果</span>
+          </div>
+          <span class="rightHint" id="chartHint">Chart.js 加载中…</span>
+        </div>
+        <div class="bd">
+          <div class="charts">
+            <div class="chartCard"><b>国家分布</b><div class="canvasWrap"><canvas id="c_country"></canvas></div></div>
+            <div class="chartCard"><b>城市分布</b><div class="canvasWrap"><canvas id="c_city"></canvas></div></div>
+            <div class="chartCard"><b>交通方式分布</b><div class="canvasWrap"><canvas id="c_transport"></canvas></div></div>
+            <div class="chartCard"><b>航司分布</b><div class="canvasWrap"><canvas id="c_airline"></canvas></div></div>
+            <div class="chartCard" style="grid-column:1/-1"><b>女声优 TAG 次数</b><div class="canvasWrap"><canvas id="c_seiyuu"></canvas></div></div>
+          </div>
+          <div class="note" id="chartNote" style="margin-top:10px;display:none">
+            未能加载 Chart.js（可能是离线或被拦截）。需要的话我可以把图表库直接内嵌到单文件里实现完全离线。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 下方：主表（紧凑） -->
+    <div class="card" style="margin-top:12px">
+      <div class="hd">
+        <div>
+          <b>行程主表（紧凑）</b>
+          <span>无横向滚动 · 点击字段可编辑</span>
+        </div>
+        <div class="rightHint" id="countHint"></div>
+      </div>
+      <div class="bd">
+        <div class="toolbar" id="toolbar">
+          <div class="field">
+            <div class="label">关键词（Live/场馆/备注/城市）</div>
+            <input id="q" placeholder="搜索…" />
+          </div>
+          <div class="field">
+            <div class="label">国家</div>
+            <select class="cycleSelect" id="flt_country"><option value="">全部</option></select>
+          </div>
+          <div class="field">
+            <div class="label">城市</div>
+            <select class="cycleSelect" id="flt_city"><option value="">全部</option></select>
+          </div>
+          <div class="field">
+            <div class="label">票务状态</div>
+            <select class="cycleSelect" id="flt_ticket"><option value="">全部</option></select>
+          </div>
+          <div class="field">
+            <div class="label">航司</div>
+            <select class="cycleSelect" id="flt_airline"><option value="">全部</option></select>
+          </div>
+          <div class="field">
+            <div class="label">排序</div>
+            <select class="cycleSelect" id="sort">
+              <option value="date_asc">日期↑</option>
+              <option value="date_desc">日期↓</option>
+              <option value="cost_desc">开销↓</option>
+              <option value="cost_asc">开销↑</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="label">操作</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn small ghost" id="btnResetFilters">重置筛选</button>
+              <button class="btn small" id="btnRecalc">刷新统计</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="list" id="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileJson" accept="application/json" style="display:none" />
+
+  <script>
+  ;(() => {
+    const LS_KEY = "genchi_plan_ready_v3";
+    const $ = (id) => document.getElementById(id);
+
+    const el = {
+      saveHint: $("saveHint"),
+      countHint: $("countHint"),
+      list: $("list"),
+      fileJson: $("fileJson"),
+      chartHint: $("chartHint"),
+      chartNote: $("chartNote"),
+      kpiBox: $("kpiBox"),
+      q: $("q"),
+      flt_country: $("flt_country"),
+      flt_city: $("flt_city"),
+      flt_ticket: $("flt_ticket"),
+      flt_airline: $("flt_airline"),
+      sort: $("sort"),
+    };
+
+    const form = {
+      datePick: $("f_datePick"),
+      btnAddDate: $("btnAddDate"),
+      btnClearDates: $("btnClearDates"),
+      dateChips: $("dateChips"),
+      hour: $("f_hour"),
+      min: $("f_min"),
+      country: $("f_country"),
+      city: $("f_city"),
+      live: $("f_live"),
+      venue: $("f_venue"),
+      ticketBtn: $("f_ticketBtn"),
+      ticketStatus: $("f_ticketStatus"),
+      ticketType: $("f_ticketType"),
+      ticketPrice: $("f_ticketPrice"),
+      transportMode: $("f_transportMode"),
+      transportBtn: $("f_transportBtn"),
+      transportStatus: $("f_transportStatus"),
+      airline: $("f_airline"),
+      transportPrice: $("f_transportPrice"),
+      seat: $("f_seat"),
+      lodging: $("f_lodging"),
+      lodgingPrice: $("f_lodgingPrice"),
+      seiyuuInput: $("f_seiyuuInput"),
+      btnAddSeiyuu: $("btnAddSeiyuu"),
+      seiyuuChips: $("seiyuuChips"),
+      notes: $("f_notes"),
+    };
+
+    // Make all selects behave like one-click cycle buttons
+    [form.ticketType, form.transportMode].forEach(enableSelectCycle);
+
+    /** @type {{settings:any, items:any[]}} */
+    let state = {
+      settings: {
+        q: "",
+        flt_country: "",
+        flt_city: "",
+        flt_ticket: "",
+        flt_airline: "",
+        sort: "date_desc"
+      },
+      items: []
+    };
+
+    let addDates = [];
+
+
+    const uid = () => "r" + Math.random().toString(16).slice(2, 9);
+
+    
+    function enableSelectCycle(sel){
+      if(!sel) return;
+      sel.classList.add("cycleSelect");
+      // Make it behave like a cycle button: pointerdown cycles to next option and prevents dropdown.
+      sel.addEventListener("pointerdown", (e)=>{
+        e.preventDefault();
+        const n = sel.options ? sel.options.length : 0;
+        if(n<=1) return;
+        sel.selectedIndex = (sel.selectedIndex + 1) % n;
+        sel.dispatchEvent(new Event("change", {bubbles:true}));
+        sel.blur();
+      });
+    }
+function parseDateToISO(s){
+      // accept YYYY.M.D or YYYY-MM-DD
+      if(!s) return "";
+      const m = String(s).trim().match(/^(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})$/);
+      if(m){
+        const y = m[1];
+        const mo = String(m[2]).padStart(2,"0");
+        const d = String(m[3]).padStart(2,"0");
+        return `${y}-${mo}-${d}`;
+      }
+      return "";
+    }
+
+    function dateInputToDot(v){
+      // v: YYYY-MM-DD
+      if(!v) return "";
+      const m = String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if(!m) return "";
+      const y = m[1];
+      const mo = String(parseInt(m[2],10));
+      const d = String(parseInt(m[3],10));
+      return `${y}.${mo}.${d}`;
+    }
+
+    
+function parseDateTimeKey(item){
+  const d = (item.date||item.日期||"").toString().trim();
+  const t = (item.time||item.时间||"").toString().trim();
+  let year=0,month=1,day=1;
+  const m = d.match(/(\d{4})[\.\-\/](\d{1,2})[\.\-\/](\d{1,2})/);
+  if(m){ year=+m[1]; month=+m[2]; day=+m[3]; }
+  else{
+    const m2 = d.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(m2){ year=+m2[1]; month=+m2[2]; day=+m2[3]; }
+  }
+  let hh=0,mm=0;
+  const tm = t.match(/(\d{1,2}):(\d{2})/);
+  if(tm){ hh=+tm[1]; mm=+tm[2]; }
+  return Date.UTC(year, month-1, day, hh, mm, 0, 0);
+}
+function compareByDateTimeDesc(a,b){ return parseDateTimeKey(b) - parseDateTimeKey(a); }
+
+function normalizeDateInput(v){
+  if(!v) return "";
+  const s = String(v).trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m){
+    const y=m[1], mo=String(parseInt(m[2],10)), d=String(parseInt(m[3],10));
+    return `${y}.${mo}.${d}`;
+  }
+  // allow already normalized 'YYYY.M.D'
+  return s;
+}
+function renderDateChips(){
+      const box = form.dateChips;
+      if(!box) return;
+      box.innerHTML = "";
+      for(const d of addDates){
+        const chip = document.createElement("span");
+        chip.className = "chip mono";
+        chip.innerHTML = `${escapeHtml(d)} <button type="button" aria-label="remove">×</button>`;
+        chip.querySelector("button").addEventListener("click", () => {
+          addDates = addDates.filter(x=>x!==d);
+          renderDateChips();
+        });
+        box.appendChild(chip);
+      }
+    }
+
+    function setStatusButton(btn, kind, value){
+      // kind: "ticket" | "transport"
+      const cls = kind==="ticket" ? pillForTicket(value)[0] : pillForTransport(value)[0];
+      btn.classList.remove("ok","warn","bad");
+      if(cls) btn.classList.add(cls);
+      btn.textContent = value ? `${value}` : "（空）";
+      btn.dataset.val = value || "";
+    }
+
+    function initAddControls(){
+      // multi-date
+      form.btnAddDate.addEventListener("click", () => {
+        const d = getAddDateDot();
+        if(!d) return;
+        if(!addDates.includes(d)) addDates.push(d);
+        addDates.sort((a,b)=>parseDateToISO(a).localeCompare(parseDateToISO(b)));
+        renderDateChips();
+      });
+      form.btnClearDates.addEventListener("click", () => {
+        addDates = [];
+        renderDateChips();
+});
+
+      // ticket status button (same cycle as table)
+      const ticketSeq = ["", "未买", "抽选中", "已买", "已入金", "已出票", "已退票"];
+      setStatusButton(form.ticketBtn, "ticket", form.ticketStatus.value);
+      form.ticketBtn.addEventListener("click", () => {
+        const i = Math.max(0, ticketSeq.indexOf(form.ticketStatus.value||""));
+        const next = ticketSeq[(i+1)%ticketSeq.length];
+        form.ticketStatus.value = next;
+        setStatusButton(form.ticketBtn, "ticket", next);
+      });
+
+      // transport status button (same cycle as table)
+      const trSeq = ["", "未定", "已定", "已付款", "已出票"];
+      setStatusButton(form.transportBtn, "transport", form.transportStatus.value);
+      form.transportBtn.addEventListener("click", () => {
+        const i = Math.max(0, trSeq.indexOf(form.transportStatus.value||""));
+        const next = trSeq[(i+1)%trSeq.length];
+        form.transportStatus.value = next;
+        setStatusButton(form.transportBtn, "transport", next);
+      });
+    }
+
+    function asInt(v){
+      const n = Number(v);
+      return Number.isFinite(n) ? Math.max(0, Math.round(n)) : 0;
+    }
+    function costOf(it){
+      return asInt(it.ticketPrice) + asInt(it.transportPrice) + asInt(it.lodgingPrice);
+    }
+
+    function normalizeItem(raw){
+      // migrate older schema (from excel starter / v2)
+      const it = {...raw};
+
+      it.id = it.id || uid();
+      it.date = (it.date ?? "").toString();
+      it.dateISO = it.dateISO || parseDateToISO(it.date);
+      it.time = (it.time ?? "").toString();
+
+      // old keys: event, venue, city, transport, transportStatus, seat, ticketStatus, lodging
+      it.live = (it.live ?? it.event ?? "").toString();
+      it.venue = (it.venue ?? "").toString();
+      it.country = (it.country ?? "").toString() || guessCountry(it.city);
+      it.city = (it.city ?? "").toString();
+
+      it.ticketStatus = (it.ticketStatus ?? "").toString();
+      it.ticketType = (it.ticketType ?? "").toString();
+      it.transportMode = (it.transportMode ?? it.transport ?? "").toString();
+      it.transport = it.transportMode; // keep compatibility
+      it.transportStatus = (it.transportStatus ?? "").toString();
+      it.airline = (it.airline ?? "").toString();
+
+      it.seat = (it.seat ?? "").toString();
+      it.lodging = (it.lodging ?? "").toString();
+      it.notes = (it.notes ?? "").toString();
+
+      it.ticketPrice = asInt(it.ticketPrice ?? 0);
+      it.transportPrice = asInt(it.transportPrice ?? 0);
+      it.lodgingPrice = asInt(it.lodgingPrice ?? 0);
+
+      it.seiyuuTags = (it.seiyuuTags ?? "").toString(); // comma-separated
+      return it;
+    }
+
+    function guessCountry(city){
+      // 极简兜底：默认日本；你也可以后续自己改
+      if(!city) return "日本";
+      const c = String(city);
+      // Chinese cities guess China
+      const cnHints = ["上海","北京","广州","深圳","杭州","南京","成都","重庆","天津","武汉","西安","苏州"];
+      if(cnHints.some(x => c.includes(x))) return "中国";
+      return "日本";
+    }
+
+    function load(){
+      const raw = localStorage.getItem(LS_KEY);
+      if(raw){
+        try{
+          const parsed = JSON.parse(raw);
+          state.settings = {...state.settings, ...(parsed.settings||{})};
+          state.items = Array.isArray(parsed.items) ? parsed.items.map(normalizeItem) : [];
+          applySettingsToUI();
+          renderAll();
+          return;
+        }catch(e){}
+      }
+      // fallback: if user picked a date but forgot to click "添加日期"
+      const picked = getAddDateDot();
+      if(!dates.length && picked){ dates.push(picked); }
+      if(!dates.length){
+        alert("请先添加至少一个日期。");
+        return;
+      }
+
+      for(const d of dates){
+        const it = normalizeItem({
+          id: uid(),
+          date: d,
+          time: getAddTimeStr(),
+          country: form.country.value.trim() || "日本",
+          city: form.city.value.trim(),
+          live: form.live.value.trim(),
+          venue: form.venue.value.trim(),
+          ticketStatus: form.ticketStatus.value,
+          ticketType: form.ticketType.value,
+          ticketPrice: form.ticketPrice.value,
+          transportMode: form.transportMode.value,
+          transportStatus: form.transportStatus.value,
+          airline: form.airline.value.trim(),
+          transportPrice: form.transportPrice.value,
+          seat: form.seat.value.trim(),
+          lodging: form.lodging.value.trim(),
+          lodgingPrice: form.lodgingPrice.value,
+          seiyuuTags: (formSeiyuu && formSeiyuu.length) ? formSeiyuu.join(",") : "",
+          notes: form.notes.value.trim(),
+          seiyuuTags: ""
+        });
+
+        state.items.unshift(it);
+      }
+
+      save();
+      // keep other fields, but clear multi-date selection
+      addDates = [];
+      renderDateChips();
+renderAll();
+      flashSaved();
+    }
+
+    // Import/Export
+    function exportJson(){
+      const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "genchi_plan_export.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    function importJsonFile(file){
+      const fr = new FileReader();
+      fr.onload = () => {
+        try{
+          const raw = String(fr.result || "{}").replace(/^\uFEFF/, "");
+          const parsed = JSON.parse(raw);
+          const items = Array.isArray(parsed.items) ? parsed.items : (Array.isArray(parsed) ? parsed : []);
+          state.items = items.map(normalizeItem);
+          state.settings = {...state.settings, ...(parsed.settings||{})};
+          applySettingsToUI();
+          formSeiyuu = [];
+      renderSeiyuuChips();
+      save(); renderAll(true);
+          alert("导入完成");
+        }catch(e){
+          alert("JSON 解析失败");
+        }
+      };
+      fr.readAsText(file, "utf-8");
+    }
+
+    // Wire UI
+    $("btnAdd").addEventListener("click", (e) => { e.preventDefault(); addFromForm(); });
+    $("btnQuickToday").addEventListener("click", (e) => {
+      e.preventDefault();
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = d.getMonth()+1;
+      const dd = d.getDate();
+      const dot = `${y}.${m}.${dd}`;
+      addDates = [dot];
+      renderDateChips();
+      setAddDatePick(y,m,dd);
+      });
+    $("btnSample").addEventListener("click", (e) => {
+      e.preventDefault();
+      addDates = ["2026.3.1","2026.3.2"];
+      renderDateChips();
+      setAddDatePick(2026,3,2);
+      setAddTime(18,30);
+      form.country.value = "日本";
+      form.city.value = "东京";
+      form.live.value = "MyGO!!!!! LIVE";
+      form.venue.value = "TOKYO DOME CITY HALL";
+      form.ticketStatus.value = "抽选中";
+      form.ticketPrice.value = "9800";
+      form.transportMode.value = "电车";
+      form.transportStatus.value = "已定";
+      form.airline.value = "";
+      form.transportPrice.value = "1200";
+      form.lodging.value = "附近酒店";
+      form.lodgingPrice.value = "15000";
+      form.notes.value = "注意开演前取票";
+    });
+
+    // filters
+    [el.q, el.flt_country, el.flt_city, el.flt_ticket, el.flt_airline, el.sort].forEach(node => {
+      node.addEventListener("input", () => {
+        setSettingsFromUI();
+        save();
+        renderAll(true);
+      });
+      node.addEventListener("change", () => {
+        setSettingsFromUI();
+        save();
+        renderAll(true);
+      });
+    });
+
+    $("btnResetFilters").addEventListener("click", () => {
+      state.settings.q = "";
+      state.settings.flt_country = "";
+      state.settings.flt_city = "";
+      state.settings.flt_ticket = "";
+      state.settings.flt_airline = "";
+      state.settings.sort = "date_asc";
+      applySettingsToUI();
+      formSeiyuu = [];
+      renderSeiyuuChips();
+      save(); renderAll(true);
+    });
+
+    $("btnRecalc").addEventListener("click", () => renderAll(true));
+
+    $("btnExportJson").addEventListener("click", exportJson);
+    $("btnImportJson").addEventListener("click", () => el.fileJson.click());
+    el.fileJson.addEventListener("change", () => {
+      const f = el.fileJson.files && el.fileJson.files[0];
+      if(f) importJsonFile(f);
+      el.fileJson.value = "";
+    });
+
+    $("btnClear").addEventListener("click", () => {
+      if(confirm("确定清空本地数据？（无法恢复）")){
+        state.items = [];
+        formSeiyuu = [];
+      renderSeiyuuChips();
+      save(); renderAll(true);
+      }
+    });
+
+    // init add-controls
+    initAddControls();
+
+    // Load starter if no state but starter file exists? (optional) - not auto, user can import json.
+    load();
+  })();
+  
+function wrapSelectsForArrow(){
+  document.querySelectorAll("select.cycleSelect").forEach(sel=>{
+    if(sel.parentElement && sel.parentElement.classList && sel.parentElement.classList.contains("selectWrap")) return;
+    const wrap=document.createElement("span");
+    wrap.className="selectWrap";
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(sel);
+  });
+}
+
+function cycleSelectNext(sel){
+  if(!sel || !sel.options || sel.options.length===0) return;
+  const i = sel.selectedIndex;
+  const next = (i + 1) % sel.options.length;
+  sel.selectedIndex = next;
+  sel.dispatchEvent(new Event("change", {bubbles:true}));
+}
+function enableCycleSelects(){
+  document.querySelectorAll('select[data-cycle-select="1"]').forEach(sel=>{
+    // Click cycles, but allow opening dropdown with Alt/Meta click
+    sel.addEventListener("pointerdown", (e)=>{
+      if(e.altKey || e.metaKey) return; // allow normal dropdown
+      e.preventDefault();
+      cycleSelectNext(sel);
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+      initTimeSelects();
+      if(form.btnAddSeiyuu) form.btnAddSeiyuu.addEventListener("click", addSeiyuuName);
+      if(form.seiyuuInput) form.seiyuuInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); addSeiyuuName(); } });
+      renderSeiyuuChips();
+
+  initTripleDatePicker2();
+
+  
+ wrapSelectsForArrow(); enableCycleSelects(); });
+
+    // Time selects (HH:MM)
+    function pad2(n){ return String(n).padStart(2,"0"); }
+function initTimeSelects(){
+  if(form.hour && form.hour.options.length===0){
+    for(let h=0; h<=24; h++){
+      const o=document.createElement("option");
+      o.value=pad2(h); o.textContent=pad2(h);
+      form.hour.appendChild(o);
+    }
+  }
+  if(form.min && form.min.options.length===0){
+    for(let m=0; m<=59; m++){
+      const o=document.createElement("option");
+      o.value=pad2(m); o.textContent=pad2(m);
+      form.min.appendChild(o);
+    }
+  }
+  // default 19:00
+  if(form.hour) form.hour.value = "19";
+  if(form.min) form.min.value = "00";
+}
+// Seiyuu multi-select chips in add form
+    let formSeiyuu = [];
+    const CHIP_COLORS = ["#3b82f6","#a855f7","#22c55e","#f97316","#ef4444","#14b8a6","#eab308","#8b5cf6"];
+    function renderSeiyuuChips(){
+      if(!form.seiyuuChips) return;
+      form.seiyuuChips.innerHTML = "";
+      formSeiyuu.forEach((name, idx)=>{
+        const chip=document.createElement("span");
+        chip.className="chip";
+        const color = CHIP_COLORS[idx % CHIP_COLORS.length];
+        chip.style.borderColor = color + "55";
+        chip.style.background = color + "14";
+        chip.innerHTML = `<span>${escapeHtml(name)}</span><span class="x" title="移除">×</span>`;
+        chip.querySelector(".x").addEventListener("click", ()=>{
+          formSeiyuu = formSeiyuu.filter((_,i)=>i!==idx);
+          renderSeiyuuChips();
+        });
+        form.seiyuuChips.appendChild(chip);
+      });
+    }
+    function addSeiyuuName(){
+      const v = (form.seiyuuInput?.value || "").trim();
+      if(!v) return;
+      // allow comma separated paste
+      const parts = v.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
+      parts.forEach(p=>{
+        if(!formSeiyuu.includes(p)) formSeiyuu.push(p);
+      });
+      form.seiyuuInput.value = "";
+      renderSeiyuuChips();
+    }
+
+function replaceFilterCycleButtons(){
+  const filterBtnIds = ["filterCountry","filterCity","filterTransport","filterTicket","filterStatus","filterAirline","filterSort","sort"];
+  filterBtnIds.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(el.tagName==="BUTTON" && el.getAttribute("data-cycle")){
+      let opts=[];
+      try{ opts = JSON.parse(el.getAttribute("data-cycle")); }catch(e){}
+      const sel=document.createElement("select");
+      sel.id=id;
+      sel.className="cycleSelect";
+      (opts.length?opts:["","全部"]).forEach(v=>{
+        const o=document.createElement("option");
+        o.value=v; o.textContent=v||"全部";
+        sel.appendChild(o);
+      });
+      sel.value = el.getAttribute("data-value")||"";
+      el.parentNode.replaceChild(sel, el);
+    }
+  });
+}
+
+function initTripleDatePicker(){
+  const y = document.getElementById("addYear");
+  const m = document.getElementById("addMonth");
+  const d = document.getElementById("addDay");
+  if(!y || !m || !d) return;
+  // populate years 2000-2050
+  if(y.options.length===0){
+    for(let yr=2000; yr<=2050; yr++){
+      const o=document.createElement("option");
+      o.value=String(yr); o.textContent=String(yr);
+      y.appendChild(o);
+    }
+  }
+  if(m.options.length===0){
+    for(let mo=1; mo<=12; mo++){
+      const o=document.createElement("option");
+      o.value=String(mo); o.textContent=String(mo);
+      m.appendChild(o);
+    }
+  }
+  if(d.options.length===0){
+    for(let day=1; day<=31; day++){
+      const o=document.createElement("option");
+      o.value=String(day); o.textContent=String(day);
+      d.appendChild(o);
+    }
+  }
+  // default to today (local)
+  const now = new Date();
+  const yy = String(now.getFullYear());
+  const mm = String(now.getMonth()+1);
+  const dd = String(now.getDate());
+  y.value = (parseInt(yy,10) >= 2000 && parseInt(yy,10) <= 2050) ? yy : "2026";
+  m.value = mm;
+  d.value = dd;
+}
+function getTripleDateValue(){
+  const y = document.getElementById("addYear");
+  const m = document.getElementById("addMonth");
+  const d = document.getElementById("addDay");
+  if(!y || !m || !d) return "";
+  const yy = y.value || "";
+  const mm = m.value || "";
+  const dd = d.value || "";
+  if(!yy || !mm || !dd) return "";
+  return `${yy}.${parseInt(mm,10)}.${parseInt(dd,10)}`;
+}
+
+function initTripleDatePicker2(){
+  const y=document.getElementById("f_year");
+  const m=document.getElementById("f_month");
+  const d=document.getElementById("f_day");
+  if(!y||!m||!d) return;
+  if(y.options.length===0){
+    for(let yr=2000; yr<=2050; yr++){
+      const o=document.createElement("option"); o.value=String(yr); o.textContent=String(yr);
+      y.appendChild(o);
+    }
+  }
+  if(m.options.length===0){
+    for(let mo=1; mo<=12; mo++){
+      const o=document.createElement("option"); o.value=String(mo); o.textContent=String(mo);
+      m.appendChild(o);
+    }
+  }
+  if(d.options.length===0){
+    for(let day=1; day<=31; day++){
+      const o=document.createElement("option"); o.value=String(day); o.textContent=String(day);
+      d.appendChild(o);
+    }
+  }
+  const now=new Date();
+  const yy=String(now.getFullYear());
+  const mm=String(now.getMonth()+1);
+  const dd=String(now.getDate());
+  y.value = (parseInt(yy,10)>=2000 && parseInt(yy,10)<=2050) ? yy : "2026";
+  m.value = mm;
+  d.value = dd;
+}
+function getTripleDateValue2(){
+  const y=document.getElementById("f_year");
+  const m=document.getElementById("f_month");
+  const d=document.getElementById("f_day");
+  if(!y||!m||!d) return "";
+  const yy=y.value||"", mm=m.value||"", dd=d.value||"";
+  if(!yy||!mm||!dd) return "";
+  return `${yy}.${parseInt(mm,10)}.${parseInt(dd,10)}`;
+}
+</script>
+</body>
+</html>
