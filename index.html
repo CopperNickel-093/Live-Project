@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>现地计划书 - 本地版</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --panel:#111827;
+      --panel2:#0f172a;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --line:rgba(255,255,255,.10);
+      --accent:#60a5fa;
+      --accent2:#34d399;
+      --danger:#ef4444;
+      --warn:#f59e0b;
+      --ok:#22c55e;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --r:16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, "Noto Sans SC", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(96,165,250,.25), transparent 60%),
+                  radial-gradient(1000px 500px at 80% 0%, rgba(52,211,153,.15), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit}
+    .wrap{max-width:1200px;margin:0 auto;padding:20px}
+    header{
+      display:flex; gap:14px; align-items:center; justify-content:space-between;
+      padding:16px 18px; border:1px solid var(--line); border-radius:22px;
+      background:rgba(17,24,39,.75); backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+    .brand{display:flex; gap:12px; align-items:center}
+    .avatar{
+      width:44px;height:44px;border-radius:14px;
+      background:linear-gradient(135deg, rgba(96,165,250,.9), rgba(52,211,153,.85));
+      display:grid; place-items:center; font-weight:800;
+      color:#071018;
+      user-select:none;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:2px;
+      line-height:1.15;
+    }
+    .title h1{font-size:16px;margin:0;font-weight:800;letter-spacing:.2px}
+    .title .sub{font-size:12px;color:var(--muted)}
+    .actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end}
+    button, .btn{
+      border:1px solid var(--line);
+      background:rgba(15,23,42,.6);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:700;
+      cursor:pointer;
+      transition: transform .05s ease, border-color .15s ease, background .15s ease;
+      user-select:none;
+    }
+    button:hover{border-color:rgba(96,165,250,.55)}
+    button:active{transform: translateY(1px)}
+    button.primary{background:rgba(96,165,250,.15); border-color:rgba(96,165,250,.5)}
+    button.danger{background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.45)}
+    button.ok{background:rgba(34,197,94,.10); border-color:rgba(34,197,94,.45)}
+    input[type="file"]{display:none}
+
+    .grid{
+      display:grid; gap:14px; margin-top:14px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 980px){
+      .grid{grid-template-columns: 420px 1fr;}
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius:22px;
+      background: rgba(17,24,39,.72);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      background: rgba(15,23,42,.55);
+    }
+    .card .hd h2{margin:0;font-size:14px;font-weight:800;letter-spacing:.2px}
+    .card .bd{padding:14px 16px}
+    .hint{font-size:12px;color:var(--muted);line-height:1.55}
+    .row{display:grid;grid-template-columns: 1fr; gap:10px; margin-top:10px}
+    .row.two{grid-template-columns: 1fr 1fr}
+    .row.three{grid-template-columns: 1fr 1fr 1fr}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:12px;color:var(--muted)}
+    .field input, .field select, .field textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(15,23,42,.55);
+      color: var(--text);
+      outline:none;
+    }
+    .field textarea{min-height:70px;resize:vertical}
+    .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+    .chip{
+      border:1px solid var(--line);
+      background: rgba(15,23,42,.55);
+      padding:8px 10px;border-radius:999px;
+      font-size:12px; color: var(--muted);
+    }
+    .chip b{color:var(--text)}
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin-top:10px;
+    }
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:auto;
+    }
+    thead th{
+      position:sticky; top:0;
+      background: rgba(15,23,42,.90);
+      z-index: 1;
+      text-align:left;
+      font-size:12px;
+      color: var(--muted);
+      padding:10px 10px;
+      border-bottom:1px solid var(--line);
+      white-space:nowrap;
+    }
+    tbody td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      vertical-align:top;
+      font-size:13px;
+    }
+    tbody tr:hover{background:rgba(255,255,255,.03)}
+    td[contenteditable="true"]{
+      outline:none;
+      border-radius:10px;
+    }
+    td[contenteditable="true"]:focus{
+      box-shadow: 0 0 0 2px rgba(96,165,250,.35) inset;
+      background:rgba(96,165,250,.08);
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(15,23,42,.55);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--muted)}
+    .dot.ok{background:var(--ok)}
+    .dot.warn{background:var(--warn)}
+    .dot.danger{background:var(--danger)}
+    .muted{color:var(--muted)}
+    .right{display:flex;justify-content:flex-end}
+    .small{font-size:12px}
+    .tableWrap{max-height:70vh; overflow:auto}
+    .k{color:var(--muted)}
+    .footer{margin:16px 2px 0; color:var(--muted); font-size:12px; line-height:1.6}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="avatar" id="avatar">CN</div>
+        <div class="title">
+          <h1>现地计划书 · 本地版</h1>
+          <div class="sub"><b>Copper Nickel</b> · 数据仅保存在本机浏览器（localStorage），不上传服务器</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="btnExport">导出JSON</button>
+        <label class="btn" for="fileImportJson">导入JSON</label>
+        <input id="fileImportJson" type="file" accept="application/json" />
+        <label class="btn ok" for="fileImportXlsx">从Excel导入</label>
+        <input id="fileImportXlsx" type="file" accept=".xlsx,.xlsm,.xls" />
+        <button class="danger" id="btnReset">重置</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div class="hd">
+          <h2>参数 / 过滤</h2>
+          <span class="pill"><span class="dot" id="dotSaved"></span><span id="saveState">已保存</span></span>
+        </div>
+        <div class="bd">
+          <div class="hint">
+            参考 Ready 项目的交互方式：<span class="k">Excel 导入 → 本地编辑 → 自动保存 → JSON 导入/导出</span>。<br/>
+            你发来的 Excel（现地计划书 11.25ver）会按第 1 个 Sheet 的 <span class="k">A-I 列</span>识别：日期/活动/城市/场地/交通/交通状态/座位/票务状态/住宿备注。
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>搜索（活动 / 城市 / 场地 / 备注）</label>
+              <input id="q" placeholder="例如：东京 / Roselia / 有明 / 待开票 …" />
+            </div>
+          </div>
+
+          <div class="row two">
+            <div class="field">
+              <label>城市</label>
+              <select id="fCity"></select>
+            </div>
+            <div class="field">
+              <label>票务状态</label>
+              <select id="fTicket"></select>
+            </div>
+          </div>
+
+          <div class="row two">
+            <div class="field">
+              <label>排序</label>
+              <select id="sortBy">
+                <option value="dateAsc">日期 ↑</option>
+                <option value="dateDesc">日期 ↓</option>
+                <option value="cityAsc">城市 ↑</option>
+                <option value="nameAsc">活动名 ↑</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>仅显示未来（相对今天）</label>
+              <select id="onlyFuture">
+                <option value="off">OFF</option>
+                <option value="on">ON</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="chips" id="stats"></div>
+
+          <div class="toolbar">
+            <button class="primary" id="btnAddSample">载入示例数据</button>
+            <button id="btnNewRow">添加一条</button>
+          </div>
+
+          <div class="row">
+            <div class="hint">
+              编辑方式：点击表格单元格直接修改（自动保存）。日期格式建议：<span class="k">YYYY.M.D</span>（与 Excel 一致）。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd">
+          <h2>清单（点击单元格可编辑）</h2>
+          <div class="right small muted" id="countInfo"></div>
+        </div>
+        <div class="bd">
+          <div class="tableWrap">
+            <table id="tbl">
+              <thead>
+                <tr>
+                  <th style="min-width:110px">日期</th>
+                  <th style="min-width:300px">活动</th>
+                  <th style="min-width:90px">城市</th>
+                  <th style="min-width:180px">场地</th>
+                  <th style="min-width:150px">交通</th>
+                  <th style="min-width:110px">交通状态</th>
+                  <th style="min-width:110px">座位</th>
+                  <th style="min-width:110px">票务状态</th>
+                  <th style="min-width:160px">住宿/备注</th>
+                  <th style="min-width:90px">操作</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="footer">
+            小提示：把这个项目部署到 GitHub Pages 时，依赖库使用 CDN。离线也能编辑（数据仍在 localStorage）。<br/>
+            如果你希望像 Ready 一样做“更多自动计算”（例如：每城预算/住宿统计/行程时间线），把你 Excel 里每一列含义和规则告诉我，我可以继续把计算逻辑补齐。
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- SheetJS (xlsx) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script>
+    const LS_KEY = "genchiPlan.v1";
+    const PRIORITY = ["已买","已收到","待开票","待定","未定","",null,undefined];
+
+    /** @typedef {{id:string,date:string,name:string,city:string,venue:string,transport:string,transportStatus:string,seat:string,ticketStatus:string,note:string}} Item */
+
+    const $ = (sel) => document.querySelector(sel);
+
+    const state = {
+      items: /** @type {Item[]} */ ([]),
+      dirty: false
+    };
+
+    function uid(){
+      return "i_" + Math.random().toString(36).slice(2,10) + "_" + Date.now().toString(36);
+    }
+
+    function parseDateKey(s){
+      // YYYY.M.D -> YYYYMMDD for sort; tolerate other formats
+      if(!s) return 0;
+      const m = String(s).trim().match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
+      if(m){
+        const y = +m[1];
+        const mm = String(+m[2]).padStart(2,"0");
+        const dd = String(+m[3]).padStart(2,"0");
+        return +(String(y)+mm+dd);
+      }
+      // fallback: Date.parse
+      const t = Date.parse(s);
+      return isNaN(t) ? 0 : t;
+    }
+
+    function todayKey(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return +(String(y)+m+dd);
+    }
+
+    function markSaved(saved){
+      const dot = $("#dotSaved");
+      const label = $("#saveState");
+      dot.className = "dot " + (saved ? "ok" : "warn");
+      label.textContent = saved ? "已保存" : "未保存";
+    }
+
+    function save(){
+      try{
+        localStorage.setItem(LS_KEY, JSON.stringify({items: state.items, updatedAt: Date.now()}));
+        state.dirty = false;
+        markSaved(true);
+      }catch(e){
+        console.error(e);
+        alert("保存失败：localStorage 写入异常。");
+      }
+    }
+
+    function load(){
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw) return false;
+      try{
+        const obj = JSON.parse(raw);
+        if(Array.isArray(obj.items)){
+          state.items = obj.items.map(it => ({
+            id: it.id || uid(),
+            date: it.date || "",
+            name: it.name || "",
+            city: it.city || "",
+            venue: it.venue || "",
+            transport: it.transport || "",
+            transportStatus: it.transportStatus || "",
+            seat: it.seat || "",
+            ticketStatus: it.ticketStatus || "",
+            note: it.note || ""
+          }));
+          return true;
+        }
+      }catch(e){
+        console.warn("load failed", e);
+      }
+      return false;
+    }
+
+    function download(filename, text, mime="application/json"){
+      const blob = new Blob([text], {type:mime});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 50);
+    }
+
+    function toCityList(items){
+      const set = new Set(items.map(x => (x.city||"").trim()).filter(Boolean));
+      return ["全部", ...Array.from(set).sort((a,b)=>a.localeCompare(b,"zh-Hans-CN"))];
+    }
+
+    function toTicketList(items){
+      const set = new Set(items.map(x => (x.ticketStatus||"").trim()).filter(Boolean));
+      const arr = Array.from(set);
+      // put common statuses first
+      const order = ["已买","已收到","待开票","待定","未定"];
+      arr.sort((a,b)=>{
+        const ia = order.indexOf(a); const ib = order.indexOf(b);
+        if(ia!==-1 || ib!==-1){
+          return (ia===-1?999:ia) - (ib===-1?999:ib);
+        }
+        return a.localeCompare(b,"zh-Hans-CN");
+      });
+      return ["全部", ...arr];
+    }
+
+    function setOptions(sel, list){
+      sel.innerHTML = "";
+      for(const v of list){
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        sel.appendChild(opt);
+      }
+    }
+
+    function getFiltered(){
+      const q = $("#q").value.trim().toLowerCase();
+      const city = $("#fCity").value;
+      const ticket = $("#fTicket").value;
+      const onlyFuture = $("#onlyFuture").value === "on";
+      const tk = todayKey();
+
+      let arr = state.items.slice();
+
+      if(city && city !== "全部"){
+        arr = arr.filter(x => (x.city||"").trim() === city);
+      }
+      if(ticket && ticket !== "全部"){
+        arr = arr.filter(x => (x.ticketStatus||"").trim() === ticket);
+      }
+      if(q){
+        arr = arr.filter(x => {
+          const hay = [x.date,x.name,x.city,x.venue,x.transport,x.transportStatus,x.seat,x.ticketStatus,x.note].join(" ").toLowerCase();
+          return hay.includes(q);
+        });
+      }
+      if(onlyFuture){
+        arr = arr.filter(x => parseDateKey(x.date) >= tk);
+      }
+
+      const sortBy = $("#sortBy").value;
+      if(sortBy === "dateAsc") arr.sort((a,b)=>parseDateKey(a.date)-parseDateKey(b.date));
+      if(sortBy === "dateDesc") arr.sort((a,b)=>parseDateKey(b.date)-parseDateKey(a.date));
+      if(sortBy === "cityAsc") arr.sort((a,b)=>(a.city||"").localeCompare(b.city||"","zh-Hans-CN") || parseDateKey(a.date)-parseDateKey(b.date));
+      if(sortBy === "nameAsc") arr.sort((a,b)=>(a.name||"").localeCompare(b.name||"","ja") || parseDateKey(a.date)-parseDateKey(b.date));
+      return arr;
+    }
+
+    function statusDot(s){
+      const v = (s||"").trim();
+      if(!v) return "dot";
+      if(v.includes("已")) return "dot ok";
+      if(v.includes("待") || v.includes("未")) return "dot warn";
+      return "dot";
+    }
+
+    function renderStats(itemsFiltered){
+      const all = state.items;
+      const tk = todayKey();
+      const upcoming = all.filter(x => parseDateKey(x.date) >= tk).length;
+      const bought = all.filter(x => String(x.ticketStatus||"").includes("已")).length;
+      const cities = toCityList(all).length - 1;
+
+      $("#stats").innerHTML = "";
+      const chips = [
+        ["总条目", all.length],
+        ["未来", upcoming],
+        ["已完成票务", bought],
+        ["城市数", cities],
+        ["当前筛选", itemsFiltered.length]
+      ];
+      for(const [k,v] of chips){
+        const el = document.createElement("div");
+        el.className = "chip";
+        el.innerHTML = `${k}: <b>${v}</b>`;
+        $("#stats").appendChild(el);
+      }
+    }
+
+    function cell(td, itemId, key){
+      td.contentEditable = "true";
+      td.spellcheck = false;
+      td.dataset.id = itemId;
+      td.dataset.key = key;
+      td.addEventListener("blur", (e)=>{
+        const id = e.target.dataset.id;
+        const k = e.target.dataset.key;
+        const val = e.target.textContent.trim();
+        const it = state.items.find(x=>x.id===id);
+        if(!it) return;
+        it[k] = val;
+        touch();
+      });
+      td.addEventListener("keydown", (e)=>{
+        if(e.key === "Enter"){
+          e.preventDefault();
+          e.target.blur();
+        }
+      });
+    }
+
+    function touch(){
+      state.dirty = true;
+      markSaved(false);
+      save();
+      hydrateFilters();
+      render();
+    }
+
+    function render(){
+      const list = getFiltered();
+      renderStats(list);
+      $("#countInfo").textContent = `显示 ${list.length} / ${state.items.length}`;
+
+      const tbody = $("#tbody");
+      tbody.innerHTML = "";
+      for(const it of list){
+        const tr = document.createElement("tr");
+
+        const tdDate = document.createElement("td"); tdDate.textContent = it.date; cell(tdDate, it.id, "date");
+        const tdName = document.createElement("td"); tdName.textContent = it.name; cell(tdName, it.id, "name");
+        const tdCity = document.createElement("td"); tdCity.textContent = it.city; cell(tdCity, it.id, "city");
+        const tdVenue = document.createElement("td"); tdVenue.textContent = it.venue; cell(tdVenue, it.id, "venue");
+        const tdTransport = document.createElement("td"); tdTransport.textContent = it.transport; cell(tdTransport, it.id, "transport");
+
+        const tdTransportStatus = document.createElement("td");
+        tdTransportStatus.innerHTML = `<span class="pill"><span class="${statusDot(it.transportStatus)}"></span><span>${escapeHtml(it.transportStatus||"")}</span></span>`;
+        tdTransportStatus.addEventListener("click", ()=> {
+          tdTransportStatus.innerHTML = "";
+          tdTransportStatus.textContent = it.transportStatus || "";
+          cell(tdTransportStatus, it.id, "transportStatus");
+          tdTransportStatus.focus();
+        });
+
+        const tdSeat = document.createElement("td"); tdSeat.textContent = it.seat; cell(tdSeat, it.id, "seat");
+
+        const tdTicket = document.createElement("td");
+        tdTicket.innerHTML = `<span class="pill"><span class="${statusDot(it.ticketStatus)}"></span><span>${escapeHtml(it.ticketStatus||"")}</span></span>`;
+        tdTicket.addEventListener("click", ()=> {
+          tdTicket.innerHTML = "";
+          tdTicket.textContent = it.ticketStatus || "";
+          cell(tdTicket, it.id, "ticketStatus");
+          tdTicket.focus();
+        });
+
+        const tdNote = document.createElement("td"); tdNote.textContent = it.note; cell(tdNote, it.id, "note");
+
+        const tdOp = document.createElement("td");
+        const del = document.createElement("button");
+        del.className = "danger";
+        del.textContent = "删除";
+        del.style.padding = "8px 10px";
+        del.addEventListener("click", ()=>{
+          if(!confirm("确定删除这条记录？")) return;
+          state.items = state.items.filter(x=>x.id!==it.id);
+          touch();
+        });
+        tdOp.appendChild(del);
+
+        tr.append(tdDate, tdName, tdCity, tdVenue, tdTransport, tdTransportStatus, tdSeat, tdTicket, tdNote, tdOp);
+        tbody.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+
+    function hydrateFilters(){
+      const currentCity = $("#fCity").value || "全部";
+      const currentTicket = $("#fTicket").value || "全部";
+      setOptions($("#fCity"), toCityList(state.items));
+      setOptions($("#fTicket"), toTicketList(state.items));
+      // restore if possible
+      if(Array.from($("#fCity").options).some(o=>o.value===currentCity)) $("#fCity").value = currentCity;
+      if(Array.from($("#fTicket").options).some(o=>o.value===currentTicket)) $("#fTicket").value = currentTicket;
+    }
+
+    function addEmptyRow(){
+      state.items.unshift({
+        id: uid(),
+        date: "",
+        name: "",
+        city: "",
+        venue: "",
+        transport: "",
+        transportStatus: "",
+        seat: "",
+        ticketStatus: "",
+        note: ""
+      });
+      touch();
+    }
+
+    function sampleData(){
+      return [
+        {date:"2026.3.10", name:"示例：LIVE (Tokyo)", city:"东京", venue:"有明アリーナ", transport:"NHxxx", transportStatus:"待定", seat:"S席", ticketStatus:"待开票", note:"酒店：待定"},
+        {date:"2026.4.02", name:"示例：Event (Shanghai)", city:"上海", venue:"国家会展中心", transport:"Gxxx", transportStatus:"已买", seat:"680席位", ticketStatus:"已买", note:"汉庭"}
+      ].map(x => ({id:uid(), transportStatus:"", ...x}));
+    }
+
+    // ----- Excel Import -----
+    function excelToItems(workbook){
+      const firstName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[firstName];
+      const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:true, defval:""});
+      // find rows where col0 matches yyyy.m.d
+      const out = [];
+      for(const r of rows){
+        const c0 = String(r[0]||"").trim();
+        if(!c0) continue;
+        if(!/^\\d{4}\\.\\d{1,2}\\.\\d{1,2}$/.test(c0)) continue;
+        out.push({
+          id: uid(),
+          date: c0,
+          name: String(r[1]||"").trim(),
+          city: String(r[2]||"").trim(),
+          venue: String(r[3]||"").trim(),
+          transport: String(r[4]||"").trim(),
+          transportStatus: String(r[5]||"").trim(),
+          seat: String(r[6]||"").trim(),
+          ticketStatus: String(r[7]||"").trim(),
+          note: String(r[8]||"").trim()
+        });
+      }
+      return out;
+    }
+
+    // ----- wire -----
+    function init(){
+      const ok = load();
+      if(!ok){
+        // empty
+        state.items = [];
+      }
+      hydrateFilters();
+      render();
+      markSaved(true);
+
+      const rerender = ()=>render();
+      ["q","fCity","fTicket","sortBy","onlyFuture"].forEach(id=>{
+        $("#"+id).addEventListener("input", rerender);
+        $("#"+id).addEventListener("change", rerender);
+      });
+
+      $("#btnNewRow").addEventListener("click", addEmptyRow);
+
+      $("#btnAddSample").addEventListener("click", ()=>{
+        if(state.items.length && !confirm("当前已有数据，仍要覆盖为示例数据吗？")) return;
+        state.items = sampleData();
+        touch();
+      });
+
+      $("#btnExport").addEventListener("click", ()=>{
+        const payload = {items: state.items, exportedAt: new Date().toISOString(), version:"v1"};
+        download(`genchi_plan_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(payload, null, 2));
+      });
+
+      $("#fileImportJson").addEventListener("change", async (e)=>{
+        const f = e.target.files?.[0];
+        if(!f) return;
+        try{
+          const txt = await f.text();
+          const obj = JSON.parse(txt);
+          if(!obj || !Array.isArray(obj.items)) throw new Error("JSON 格式不正确");
+          state.items = obj.items.map(it => ({
+            id: it.id || uid(),
+            date: it.date || "",
+            name: it.name || "",
+            city: it.city || "",
+            venue: it.venue || "",
+            transport: it.transport || "",
+            transportStatus: it.transportStatus || "",
+            seat: it.seat || "",
+            ticketStatus: it.ticketStatus || "",
+            note: it.note || ""
+          }));
+          touch();
+        }catch(err){
+          alert("导入失败：" + err.message);
+        }finally{
+          e.target.value = "";
+        }
+      });
+
+      $("#fileImportXlsx").addEventListener("change", async (e)=>{
+        const f = e.target.files?.[0];
+        if(!f) return;
+        try{
+          const buf = await f.arrayBuffer();
+          const wb = XLSX.read(buf, {type:"array"});
+          const items = excelToItems(wb);
+          if(!items.length){
+            alert("未识别到数据：请确认第 1 个 Sheet 的 A 列存在 YYYY.M.D 格式日期。");
+            return;
+          }
+          const msg = `识别到 ${items.length} 条记录。是否覆盖当前数据？\\n（取消=追加）`;
+          if(confirm(msg)){
+            state.items = items;
+          }else{
+            state.items = [...items, ...state.items];
+          }
+          touch();
+        }catch(err){
+          console.error(err);
+          alert("Excel 导入失败：" + err.message);
+        }finally{
+          e.target.value = "";
+        }
+      });
+
+      $("#btnReset").addEventListener("click", ()=>{
+        if(!confirm("确定重置？这会清空本机浏览器中的数据。")) return;
+        localStorage.removeItem(LS_KEY);
+        state.items = [];
+        hydrateFilters();
+        render();
+        markSaved(true);
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
