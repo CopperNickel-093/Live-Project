@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>现地计划助手</title>
+  <style>
+    :root{
+      --bg:#0b1020; --bg2:#070a14;
+      --card: rgba(18,26,51,.92);
+      --text:#e8ecff; --muted:#a9b2d6;
+      --line: rgba(255,255,255,.10);
+      --ok:#6ef2b6; --warn:#ffd27a; --bad:#ff8a8a; --info:#86b7ff;
+      --btn1:#2b3a75; --btn2:#1e2a55;
+      --shadow: 0 14px 40px rgba(0,0,0,.45);
+      --r:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--text);
+      background: radial-gradient(1200px 700px at 10% 0%, rgba(86,120,255,.22), transparent 55%),
+                  radial-gradient(900px 600px at 90% 10%, rgba(110,242,182,.16), transparent 60%),
+                  linear-gradient(180deg, var(--bg), var(--bg2));
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    a{color:inherit}
+    .wrap{max-width:1180px; margin:0 auto; padding:20px 14px 28px}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-bottom:12px;
+    }
+    .brand{display:flex; align-items:center; gap:12px}
+    .avatar{
+      width:44px; height:44px; border-radius:14px;
+      background: linear-gradient(135deg, rgba(134,183,255,.35), rgba(110,242,182,.22));
+      border:1px solid var(--line);
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+      overflow:hidden; flex:0 0 auto;
+      display:grid; place-items:center;
+      font-weight:800; letter-spacing:.5px;
+    }
+    .avatar img{width:100%; height:100%; object-fit:cover; display:block}
+    .titlebox{line-height:1.05}
+    .title{font-weight:800; font-size:15px}
+    .subtitle{color:var(--muted); font-size:12px; margin-top:4px}
+    .pill{
+      font-family:var(--mono);
+      font-size:11px; color:var(--muted);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:6px 10px;
+      background: rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+
+    .panel{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel .hd{
+      padding:12px 14px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+    .hd h2{margin:0; font-size:13px; letter-spacing:.2px}
+    .hd .hint{color:var(--muted); font-size:12px}
+    .panel .bd{padding:12px 14px}
+
+    /* top form: stacked layout */
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr 1.1fr 1fr 1.1fr;
+      gap:10px;
+    }
+    .grid .full{grid-column:1 / -1}
+    .field{display:flex; flex-direction:column; gap:6px}
+    label{font-size:11px; color:var(--muted)}
+    input, select, textarea{
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:12px;
+      padding:9px 10px;
+      outline:none;
+      font-size:13px;
+    }
+    textarea{min-height:40px; resize:vertical}
+    input:focus, select:focus, textarea:focus{border-color: rgba(134,183,255,.55); box-shadow: 0 0 0 3px rgba(134,183,255,.12)}
+    .btnrow{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+    button{
+      border:1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, var(--btn1), var(--btn2));
+      color:var(--text);
+      padding:9px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:13px;
+    }
+    button.secondary{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:650;
+    }
+    button.danger{
+      background: rgba(255,90,90,.12);
+      border:1px solid rgba(255,90,90,.30);
+    }
+    button:active{transform: translateY(1px)}
+    .file{display:none}
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(6, minmax(0,1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+    .kpi{
+      padding:10px 10px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.035);
+      min-height:58px;
+    }
+    .kpi .k{color:var(--muted); font-size:11px}
+    .kpi .v{font-size:18px; font-weight:850; margin-top:5px; font-family:var(--mono)}
+    .kpi .s{color:var(--muted); font-size:11px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+    /* bottom list: compact rows, no horizontal scroll */
+    .toolbar{
+      display:flex; flex-wrap:wrap;
+      align-items:center; justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .toolbar .left, .toolbar .right{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+    .search{
+      width:min(440px, 100%);
+      display:flex; gap:8px; align-items:center;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+    .search input{border:none; background:transparent; padding:0; font-size:13px; width:100%}
+    .rows{display:flex; flex-direction:column; gap:8px}
+    .row{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius: 14px;
+      padding:9px 10px;
+      display:grid;
+      grid-template-columns: 112px 1fr 160px;
+      gap:10px;
+      align-items:start;
+    }
+    .row .date{
+      font-family: var(--mono);
+      font-size:12px;
+      color: var(--text);
+      padding-top:2px;
+      white-space:nowrap;
+    }
+    .row .main{min-width:0}
+    .row .event{
+      font-size:13px;
+      font-weight:800;
+      line-height:1.15;
+      word-break:break-word;
+    }
+    .row .meta{
+      margin-top:4px;
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.2;
+      word-break:break-word;
+    }
+    .row .right{
+      display:flex; flex-direction:column; gap:6px; align-items:flex-end;
+    }
+    .badges{display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end}
+    .badge{
+      font-size:11px; padding:4px 8px; border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      max-width: 100%;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .badge.ok{color: rgba(110,242,182,.98); border-color: rgba(110,242,182,.25); background: rgba(110,242,182,.08)}
+    .badge.warn{color: rgba(255,210,122,.98); border-color: rgba(255,210,122,.25); background: rgba(255,210,122,.08)}
+    .badge.bad{color: rgba(255,138,138,.98); border-color: rgba(255,138,138,.25); background: rgba(255,138,138,.08)}
+    .badge.info{color: rgba(134,183,255,.98); border-color: rgba(134,183,255,.25); background: rgba(134,183,255,.08)}
+    .actions{display:flex; gap:8px; justify-content:flex-end}
+    .iconbtn{
+      padding:7px 9px;
+      border-radius:12px;
+      font-size:12px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      cursor:pointer;
+      color: var(--text);
+    }
+    .iconbtn.danger{background: rgba(255,90,90,.12); border-color: rgba(255,90,90,.30)}
+    .editable{border-bottom:1px dashed rgba(255,255,255,.25); padding-bottom:1px; outline:none}
+    .muted{color:var(--muted)}
+    .footerhint{color:var(--muted); font-size:12px; margin-top:10px}
+
+    @media (max-width: 960px){
+      .grid{grid-template-columns: 1fr 1fr}
+      .kpis{grid-template-columns: repeat(3, minmax(0,1fr))}
+    }
+    @media (max-width: 680px){
+      .row{grid-template-columns: 96px 1fr; }
+      .row .right{grid-column: 1 / -1; align-items:flex-start}
+      .badges{justify-content:flex-start}
+      .actions{justify-content:flex-start}
+      .kpis{grid-template-columns: repeat(2, minmax(0,1fr))}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="avatar" id="avatarBox" aria-label="avatar">
+          <img src="./avatar.jpg" alt="avatar" onerror="this.remove(); document.getElementById('avatarBox').textContent='CN';" />
+        </div>
+        <div class="titlebox">
+          <div class="title">Copper Nickel · 现地计划</div>
+          <div class="subtitle">上方添加 / 筛选 · 下方紧凑列表（无横向滚动）</div>
+        </div>
+      </div>
+      <div class="pill" id="savePill">localStorage: 未保存</div>
+    </div>
+
+    <!-- TOP: add & options -->
+    <div class="panel" style="margin-bottom:12px">
+      <div class="hd">
+        <h2>选项区 · 添加新行程</h2>
+        <div class="hint">添加后自动保存；所有字段可在下方行程中直接编辑</div>
+      </div>
+      <div class="bd">
+        <div class="grid" id="addGrid">
+          <div class="field">
+            <label>日期（YYYY-MM-DD）</label>
+            <input id="fDateISO" type="date" />
+          </div>
+          <div class="field">
+            <label>时间（可选，例如 18:30）</label>
+            <input id="fTime" placeholder="18:30" />
+          </div>
+          <div class="field">
+            <label>地区 / 城市</label>
+            <input id="fCity" placeholder="东京 / 上海 / 北京…" />
+          </div>
+          <div class="field">
+            <label>票务状态</label>
+            <select id="fTicket">
+              <option value="">（空）</option>
+              <option>待开票</option>
+              <option>待抽选</option>
+              <option>等收票</option>
+              <option>已买</option>
+              <option>已收到</option>
+              <option>未中签</option>
+            </select>
+          </div>
+
+          <div class="field full">
+            <label>Live / 活动名称</label>
+            <input id="fEvent" placeholder="例如：MyGO!!!!!×Ave Mujica 合同ライブ…" />
+          </div>
+
+          <div class="field full">
+            <label>场馆</label>
+            <input id="fVenue" placeholder="例如：Kアリーナ横浜 / 浦发银行东方体育中心…" />
+          </div>
+
+          <div class="field">
+            <label>交通方式 / 航班车次</label>
+            <input id="fTransport" placeholder="例如：NH96X / T109 / 自驾…" />
+          </div>
+          <div class="field">
+            <label>交通状态</label>
+            <select id="fTransportStatus">
+              <option value="">（空）</option>
+              <option>待购买</option>
+              <option>已买</option>
+              <option>已定</option>
+              <option>待确认</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>座位</label>
+            <input id="fSeat" placeholder="S席 / VIP / 看台…" />
+          </div>
+          <div class="field">
+            <label>住宿</label>
+            <input id="fLodging" placeholder="酒店/朋友家/待定…" />
+          </div>
+
+          <div class="field full">
+            <label>备注（可选）</label>
+            <textarea id="fNote" placeholder="例如：取票窗口/入场注意事项/同行人…"></textarea>
+          </div>
+
+          <div class="btnrow full">
+            <button id="btnAdd">添加行程</button>
+            <button class="secondary" id="btnClear">清空输入</button>
+            <span class="muted" style="font-size:12px">提示：日期为空时不会添加</span>
+
+            <span style="flex:1"></span>
+
+            <input class="file" id="fileJson" type="file" accept="application/json" />
+            <input class="file" id="fileXlsx" type="file" accept=".xlsx,.xls" />
+            <button class="secondary" id="btnImportJson">导入JSON</button>
+            <button class="secondary" id="btnExportJson">导出JSON</button>
+            <button class="secondary" id="btnImportXlsx">从 Excel 导入</button>
+            <button class="danger" id="btnReset">重置（清空本地）</button>
+          </div>
+        </div>
+
+        <div class="kpis" id="kpiBox"></div>
+      </div>
+    </div>
+
+    <!-- BOTTOM: main list -->
+    <div class="panel">
+      <div class="hd">
+        <h2>行程主表</h2>
+        <div class="hint">点击下方带虚线的字段即可编辑；回车/点击空白处自动保存</div>
+      </div>
+      <div class="bd">
+        <div class="toolbar">
+          <div class="left">
+            <div class="search" title="关键词：活动 / 场馆 / 城市 / 交通 / 座位 / 住宿">
+              <span class="muted" style="font-family:var(--mono);font-size:12px">🔎</span>
+              <input id="q" placeholder="搜索…" />
+            </div>
+            <select id="yearFilter">
+              <option value="ALL">全部年份</option>
+            </select>
+            <select id="cityFilter">
+              <option value="ALL">全部地区</option>
+            </select>
+            <select id="ticketFilter">
+              <option value="ALL">全部票务状态</option>
+              <option value="">（空）</option>
+              <option>待开票</option>
+              <option>待抽选</option>
+              <option>等收票</option>
+              <option>已买</option>
+              <option>已收到</option>
+              <option>未中签</option>
+            </select>
+            <select id="sortBy">
+              <option value="dateAsc">按日期↑</option>
+              <option value="dateDesc">按日期↓</option>
+              <option value="cityAsc">按地区A→Z</option>
+              <option value="cityDesc">按地区Z→A</option>
+            </select>
+          </div>
+          <div class="right">
+            <span class="pill" id="countPill">0 items</span>
+          </div>
+        </div>
+
+        <div class="rows" id="rows"></div>
+        <div class="footerhint">无横向滚动：信息会自动换行。需要更“挤”的密度我也可以继续压缩字号/间距。</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const LS_KEY = "genchi_plan_ready_v2";
+  const $ = (id)=>document.getElementById(id);
+
+  const state = {
+    settings: {
+      yearFilter: "ALL",
+      cityFilter: "ALL",
+      ticketFilter: "ALL",
+      q: "",
+      sortBy: "dateAsc"
+    },
+    items: []
+  };
+
+  // ---------- helpers ----------
+  const pad2 = (n)=>String(n).padStart(2,"0");
+  function isoToDisplay(iso){
+    if(!iso) return "";
+    const [y,m,d] = iso.split("-").map(x=>parseInt(x,10));
+    if(!y||!m||!d) return "";
+    return `${y}.${m}.${d}`;
+  }
+  function displayToISO(s){
+    // accept YYYY.M.D or YYYY.MM.DD
+    if(!s) return "";
+    const m = String(s).trim().match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
+    if(!m) return "";
+    const y=+m[1], mo=+m[2], d=+m[3];
+    return `${y}-${pad2(mo)}-${pad2(d)}`;
+  }
+  function genId(){
+    return "r" + Math.random().toString(36).slice(2,9);
+  }
+  function norm(s){ return (s??"").toString().trim(); }
+  function contains(hay, needle){ return hay.toLowerCase().includes(needle.toLowerCase()); }
+
+  function badgeClass(val){
+    const v = norm(val);
+    if(!v) return "badge";
+    const ok = ["已买","已定","已收到"];
+    const warn = ["待开票","待抽选","待购买","待确认","等收票","待定"];
+    const bad = ["未中签"];
+    if(ok.includes(v)) return "badge ok";
+    if(bad.includes(v)) return "badge bad";
+    if(warn.includes(v)) return "badge warn";
+    return "badge info";
+  }
+
+  // ---------- persistence ----------
+  function setSavePill(text){
+    const el = $("savePill");
+    el.textContent = text;
+  }
+  function save(){
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    setSavePill("localStorage: 已保存 " + new Date().toLocaleString());
+  }
+  function load(){
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      try{
+        const obj = JSON.parse(raw);
+        if(obj && obj.items) {
+          state.items = obj.items;
+          state.settings = Object.assign(state.settings, obj.settings || {});
+        }
+      }catch(e){}
+    }else{
+      // try load bundled starter json on first open
+      fetch("./starter_from_excel.json").then(r=>r.ok?r.json():null).then(obj=>{
+        if(obj && obj.items){
+          state.items = obj.items;
+          renderAll();
+          save();
+        }
+      }).catch(()=>{});
+    }
+  }
+
+  // ---------- computed ----------
+  function filteredItems(){
+    let items = [...state.items];
+
+    // sort
+    const sortBy = state.settings.sortBy;
+    items.sort((a,b)=>{
+      const da = a.dateISO || displayToISO(a.date) || "";
+      const db = b.dateISO || displayToISO(b.date) || "";
+      if(sortBy==="dateAsc") return da.localeCompare(db);
+      if(sortBy==="dateDesc") return db.localeCompare(da);
+      if(sortBy==="cityAsc") return (a.city||"").localeCompare(b.city||"");
+      if(sortBy==="cityDesc") return (b.city||"").localeCompare(a.city||"");
+      return 0;
+    });
+
+    // year filter
+    const yf = state.settings.yearFilter;
+    if(yf!=="ALL"){
+      items = items.filter(it=>{
+        const iso = it.dateISO || displayToISO(it.date);
+        return iso && iso.startsWith(yf + "-");
+      });
+    }
+    // city
+    const cf = state.settings.cityFilter;
+    if(cf!=="ALL"){
+      items = items.filter(it=>norm(it.city)===cf);
+    }
+    // ticket
+    const tf = state.settings.ticketFilter;
+    if(tf!=="ALL"){
+      items = items.filter(it=>norm(it.ticketStatus)===tf);
+    }
+    // q
+    const q = norm(state.settings.q);
+    if(q){
+      items = items.filter(it=>{
+        const blob = [
+          it.event,it.venue,it.city,it.transport,it.transportStatus,it.seat,it.ticketStatus,it.lodging,it.time,it.note
+        ].map(x=>norm(x)).join(" | ");
+        return contains(blob, q);
+      });
+    }
+
+    return items;
+  }
+
+  function computeKPI(items){
+    const total = items.length;
+    const cities = new Set(items.map(x=>norm(x.city)).filter(Boolean));
+    const ticketBought = items.filter(x=>norm(x.ticketStatus)==="已买" || norm(x.ticketStatus)==="已收到").length;
+    const transportDone = items.filter(x=>["已买","已定"].includes(norm(x.transportStatus))).length;
+    const lodgingFilled = items.filter(x=>norm(x.lodging)).length;
+
+    const dates = items.map(x=>x.dateISO || displayToISO(x.date)).filter(Boolean).sort();
+    const range = dates.length? `${dates[0]} ~ ${dates[dates.length-1]}` : "—";
+
+    const next = (()=> {
+      const today = new Date();
+      const tIso = today.toISOString().slice(0,10);
+      const upcoming = items
+        .map(x=>({iso: x.dateISO || displayToISO(x.date), it:x}))
+        .filter(x=>x.iso && x.iso>=tIso)
+        .sort((a,b)=>a.iso.localeCompare(b.iso))[0];
+      if(!upcoming) return "—";
+      const it = upcoming.it;
+      return `${upcoming.iso} · ${(it.city||"").trim()} · ${(it.event||"").trim()}`.trim();
+    })();
+
+    return [
+      {k:"条目", v: total, s:"当前筛选结果"},
+      {k:"地区数", v: cities.size, s:[...cities].slice(0,3).join(" / ") + (cities.size>3?"…":"")},
+      {k:"票务已买/已收", v: ticketBought, s:"ticketStatus ∈ {已买, 已收到}"},
+      {k:"交通已定/已买", v: transportDone, s:"transportStatus ∈ {已定, 已买}"},
+      {k:"住宿有值", v: lodgingFilled, s:"lodging 非空"},
+      {k:"日期范围 / 下一场", v: " ", s: range + "  |  Next: " + next}
+    ];
+  }
+
+  // ---------- render ----------
+  function rebuildFilters(){
+    // year options
+    const years = [...new Set(state.items.map(it=>{
+      const iso = it.dateISO || displayToISO(it.date);
+      return iso ? iso.slice(0,4) : "";
+    }).filter(Boolean))].sort();
+    const yearSel = $("yearFilter");
+    yearSel.innerHTML = `<option value="ALL">全部年份</option>` + years.map(y=>`<option value="${y}">${y}</option>`).join("");
+
+    // city options
+    const cities = [...new Set(state.items.map(it=>norm(it.city)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    const citySel = $("cityFilter");
+    citySel.innerHTML = `<option value="ALL">全部地区</option>` + cities.map(c=>`<option value="${c}">${c}</option>`).join("");
+
+    // apply selection
+    yearSel.value = state.settings.yearFilter;
+    citySel.value = state.settings.cityFilter;
+    $("ticketFilter").value = state.settings.ticketFilter;
+    $("q").value = state.settings.q;
+    $("sortBy").value = state.settings.sortBy;
+  }
+
+  function renderKPI(items){
+    const box = $("kpiBox");
+    const kpis = computeKPI(items);
+    box.innerHTML = kpis.map(x=>{
+      const vv = (x.v===" ") ? "" : x.v;
+      return `<div class="kpi">
+        <div class="k">${x.k}</div>
+        <div class="v">${vv}</div>
+        <div class="s">${x.s}</div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderRows(items){
+    const rows = $("rows");
+    $("countPill").textContent = `${items.length} items`;
+
+    rows.innerHTML = items.map(it=>{
+      const iso = it.dateISO || displayToISO(it.date) || "";
+      const disp = it.date || isoToDisplay(iso) || "";
+      const city = norm(it.city);
+      const venue = norm(it.venue);
+      const time = norm(it.time);
+      const event = norm(it.event);
+
+      const badges = [
+        ["票务", it.ticketStatus],
+        ["交通", it.transportStatus],
+        ["方式", it.transport],
+        ["座位", it.seat],
+        ["住宿", it.lodging],
+      ].filter(x=>norm(x[1])).map(([k,v])=>{
+        return `<span class="${badgeClass(v)}" title="${k}: ${escapeHtml(v)}">${k}:${escapeHtml(v)}</span>`;
+      }).join("");
+
+      const metaParts = [];
+      metaParts.push(city ? `📍 <span class="editable" data-id="${it.id}" data-k="city" contenteditable="true">${escapeHtml(city)}</span>` : `📍 <span class="editable" data-id="${it.id}" data-k="city" contenteditable="true">（地区）</span>`);
+      metaParts.push(venue ? `🏟️ <span class="editable" data-id="${it.id}" data-k="venue" contenteditable="true">${escapeHtml(venue)}</span>` : `🏟️ <span class="editable" data-id="${it.id}" data-k="venue" contenteditable="true">（场馆）</span>`);
+      if(time) metaParts.push(`🕒 <span class="editable" data-id="${it.id}" data-k="time" contenteditable="true">${escapeHtml(time)}</span>`);
+      const note = norm(it.note);
+      if(note) metaParts.push(`📝 <span class="editable" data-id="${it.id}" data-k="note" contenteditable="true">${escapeHtml(note)}</span>`);
+
+      return `<div class="row" data-row="${it.id}">
+        <div class="date">
+          <div><span class="editable" data-id="${it.id}" data-k="dateISO" contenteditable="true">${escapeHtml(iso||"")}</span></div>
+          <div class="muted" style="margin-top:4px"><span class="editable" data-id="${it.id}" data-k="date" contenteditable="true">${escapeHtml(disp||"")}</span></div>
+        </div>
+        <div class="main">
+          <div class="event"><span class="editable" data-id="${it.id}" data-k="event" contenteditable="true">${escapeHtml(event||"（活动名称）")}</span></div>
+          <div class="meta">${metaParts.join(" · ")}</div>
+        </div>
+        <div class="right">
+          <div class="badges">${badges || `<span class="badge muted">（暂无状态）</span>`}</div>
+          <div class="actions">
+            <button class="iconbtn" data-act="dup" data-id="${it.id}">复制</button>
+            <button class="iconbtn danger" data-act="del" data-id="${it.id}">删除</button>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+
+    // mark editables
+    rows.querySelectorAll(".editable").forEach(el=>{
+      el.classList.add("editable");
+      el.addEventListener("keydown", (e)=>{
+        if(e.key==="Enter"){
+          e.preventDefault();
+          el.blur();
+        }
+      });
+      el.addEventListener("blur", ()=>{
+        const id = el.getAttribute("data-id");
+        const k = el.getAttribute("data-k");
+        const v = el.textContent.trim();
+        const it = state.items.find(x=>x.id===id);
+        if(!it) return;
+
+        if(k==="dateISO"){
+          // accept YYYY-MM-DD; also if user enters YYYY.M.D convert
+          let iso = v;
+          if(v.includes(".")) iso = displayToISO(v);
+          if(iso && !/^\d{4}-\d{2}-\d{2}$/.test(iso)) iso = "";
+          it.dateISO = iso;
+          if(iso) it.date = isoToDisplay(iso);
+        }else if(k==="date"){
+          it.date = v;
+          const iso = displayToISO(v);
+          if(iso) it.dateISO = iso;
+        }else{
+          it[k] = v;
+        }
+        save();
+        // refresh dependent filters/kpis
+        renderAll(false);
+      });
+    });
+  }
+
+  function escapeHtml(str){
+    return (str??"").toString()
+      .replaceAll("&","&amp;").replaceAll("<","&lt;")
+      .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
+  }
+
+  function renderAll(rebuild=true){
+    if(rebuild) rebuildFilters();
+    const items = filteredItems();
+    renderKPI(items);
+    renderRows(items);
+  }
+
+  // ---------- events ----------
+  function bind(){
+    // filters
+    $("q").addEventListener("input", (e)=>{ state.settings.q = e.target.value; save(); renderAll(false); });
+    $("yearFilter").addEventListener("change", (e)=>{ state.settings.yearFilter = e.target.value; save(); renderAll(false); });
+    $("cityFilter").addEventListener("change", (e)=>{ state.settings.cityFilter = e.target.value; save(); renderAll(false); });
+    $("ticketFilter").addEventListener("change", (e)=>{ state.settings.ticketFilter = e.target.value; save(); renderAll(false); });
+    $("sortBy").addEventListener("change", (e)=>{ state.settings.sortBy = e.target.value; save(); renderAll(false); });
+
+    // row actions
+    $("rows").addEventListener("click", (e)=>{
+      const btn = e.target.closest("button");
+      if(!btn) return;
+      const act = btn.getAttribute("data-act");
+      const id = btn.getAttribute("data-id");
+      const idx = state.items.findIndex(x=>x.id===id);
+      if(idx<0) return;
+      if(act==="del"){
+        if(confirm("删除该条行程？")){
+          state.items.splice(idx,1);
+          save(); renderAll();
+        }
+      }
+      if(act==="dup"){
+        const it = JSON.parse(JSON.stringify(state.items[idx]));
+        it.id = genId();
+        state.items.splice(idx+1, 0, it);
+        save(); renderAll();
+      }
+    });
+
+    // add form
+    $("btnAdd").addEventListener("click", ()=>{
+      const dateISO = norm($("fDateISO").value);
+      if(!dateISO){
+        alert("日期不能为空");
+        return;
+      }
+      const it = {
+        id: genId(),
+        dateISO,
+        date: isoToDisplay(dateISO),
+        time: norm($("fTime").value),
+        city: norm($("fCity").value),
+        event: norm($("fEvent").value),
+        venue: norm($("fVenue").value),
+        ticketStatus: norm($("fTicket").value),
+        transport: norm($("fTransport").value),
+        transportStatus: norm($("fTransportStatus").value),
+        seat: norm($("fSeat").value),
+        lodging: norm($("fLodging").value),
+        note: norm($("fNote").value)
+      };
+      state.items.push(it);
+      save();
+      renderAll();
+      // small UX: scroll to bottom new item (sorted might move; so just focus search)
+      $("q").focus();
+    });
+    $("btnClear").addEventListener("click", ()=>{
+      ["fDateISO","fTime","fCity","fEvent","fVenue","fTransport","fSeat","fLodging","fNote"].forEach(id=>$(id).value="");
+      $("fTicket").value="";
+      $("fTransportStatus").value="";
+    });
+
+    // import/export/reset
+    $("btnExportJson").addEventListener("click", ()=>{
+      const blob = new Blob([JSON.stringify({settings: state.settings, items: state.items}, null, 2)], {type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "genchi_plan_export.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    $("btnImportJson").addEventListener("click", ()=> $("fileJson").click());
+    $("fileJson").addEventListener("change", async (e)=>{
+      const f = e.target.files?.[0];
+      if(!f) return;
+      const text = await f.text();
+      try{
+        const obj = JSON.parse(text);
+        if(obj && obj.items){
+          state.items = obj.items;
+          state.settings = Object.assign(state.settings, obj.settings || {});
+          save(); renderAll();
+        }else{
+          alert("JSON 格式不正确（缺少 items）");
+        }
+      }catch(err){
+        alert("无法解析 JSON");
+      }finally{
+        e.target.value = "";
+      }
+    });
+
+    $("btnReset").addEventListener("click", ()=>{
+      if(confirm("将清空本地保存并恢复初始导入。确定？")){
+        localStorage.removeItem(LS_KEY);
+        location.reload();
+      }
+    });
+
+    $("btnImportXlsx").addEventListener("click", ()=> $("fileXlsx").click());
+    $("fileXlsx").addEventListener("change", async (e)=>{
+      const f = e.target.files?.[0];
+      if(!f) return;
+      // lightweight xlsx parser: use SheetJS via CDN not allowed offline; so we keep this button as "placeholder"
+      alert("当前离线单文件版本不内置 Excel 解析库。建议：先在电脑上导出为 JSON 再导入（我也可以把 SheetJS 内置进单文件里）。");
+      e.target.value="";
+    });
+  }
+
+  // init
+  load();
+  bind();
+  renderAll();
+  setSavePill("localStorage: 已加载");
+})();
+</script>
+</body>
+</html>
